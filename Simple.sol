@@ -6,7 +6,9 @@ contract Base {
 }
 
 contract Simple is Base {
-  mapping(address => uint) balances;
+  mapping(address => int) balances;
+
+  uint[] numbers;
 
   uint x = 33;
   string short = "happy times";
@@ -20,6 +22,10 @@ contract Simple is Base {
   uint y = 500;
 
   constructor() {
-    balances[msg.sender] = 5243;
+    balances[msg.sender] = -555;
+
+    numbers.push(5);
+    numbers.push(10);
+    numbers.push(15);
   }
 }

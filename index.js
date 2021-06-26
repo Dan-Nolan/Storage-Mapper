@@ -59,11 +59,18 @@ class StorageMap {
 
     // slot: a string with the decimal value of the slot
     const { label, slot, type } = entry;
-    const { encoding, value: typeValue } = types[type];
+    const { encoding, value: typeValue, base } = types[type];
     const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
     if(encoding === "inplace") {
       const value = await getStorageAt(paddedSlot);
       return this.parseValue(value, type);
+    }
+    else if(encoding === "dynamic_array") {
+      const index = args[0];
+      const baseSlot = ethers.utils.keccak256(paddedSlot);
+      const indexSlot = ethers.BigNumber.from(baseSlot).add(index).toHexString();
+      const storage = await getStorageAt(indexSlot);
+      return this.parseValue(storage, base);
     }
     else if(encoding === "bytes") {
       // lookup bytes ->
@@ -133,14 +140,17 @@ async function test() {
 
   const isOn = await storageMap.getStorage('isOn');
 
-  const balance = await storageMap.getStorage('balances', addr);
   const short = await storageMap.getStorage('short');
   const long = await storageMap.getStorage('long');
 
   const neg = await storageMap.getStorage('neg');
   const pos = await storageMap.getStorage('pos');
 
-  console.log({ x, y, z, neg, pos, isOn, balance, short, long });
+  const balance = await storageMap.getStorage('balances', addr);
+
+  const number = await storageMap.getStorage('numbers', 2);
+
+  console.log({ x, y, z, neg, pos, isOn, balance, short, long, number });
 }
 
 test()
