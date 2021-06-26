@@ -31,43 +31,60 @@ const { types, storage } = storageLayout;
 
 console.log(storageLayout);
 
-const storageMap = storage.reduce((obj, entry) => {
-  // slot: a string with the decimal value of the slot
-  const { label, slot, type } = entry;
-  const { encoding } = types[type];
-  const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
-  if(encoding === "inplace") {
-    obj[label] = paddedSlot;
+class StorageMap {
+  constructor(contract, storageLayout) {
+    this.contract = contract;
+    this.storageLayout = storageLayout;
   }
-  else if(encoding === "bytes") {
-    // TODO: should all storageMap values be functions or can this be done as a class property function?
-    // in this case, a value lookup would be necessary first
-    // lookup bytes ->
-    //   is less than 32 bytes -> return higher-order bytes
-    //   is greater -> take the length, go to keccak256(p) and start pulling data 
-    obj[label] = () => {
-      // if its less than 32 bytes it is encoded in place
-      // return paddedSlot;
+  async getStorage(name, ...args) {
+    const { provider } = this.contract;
+    const { types, storage } = this.storageLayout;
 
-      // otherwise we actually need to get the value back first to see the length
-      // and then go search by the keccak256 hash of the slot
-      return ethers.utils.keccak256(paddedSlot);
+    const entry = storage.find(x => x.label === name);
+    if(!entry) {
+      console.log(`Storage variable '${name}' not found!`)
     }
-  }
-  else if(encoding === "mapping") {
-    obj[label] = (key) => {
+
+    const getStorageAt = (loc) => provider.getStorageAt(this.contract.address, loc);
+
+    // slot: a string with the decimal value of the slot
+    const { label, slot, type } = entry;
+    const { encoding } = types[type];
+    const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
+    if(encoding === "inplace") {
+      return getStorageAt(paddedSlot);
+    }
+    else if(encoding === "bytes") {
+      // lookup bytes ->
+      //   is less than 32 bytes -> return higher-order bytes
+      //   is greater -> take the length, go to keccak256(p) and start pulling data
+      //              -> next slot is keccak256(p) + 1, keccak256(p) + 2, etc...
+      const initialValue = await getStorageAt(paddedSlot);
+      const bytesLength = parseInt(initialValue.slice(-2), 16);
+      const isShort = (initialValue.length === 66);
+      if(isShort) {
+        const val = initialValue.slice(0, bytesLength + 2);
+        return val;
+      }
+      else {
+        let allStorage = "0x";
+        const baseSlot = ethers.utils.keccak256(paddedSlot);
+        for(let i = 0; i*64 < bytesLength; i++) {
+          const currentSlot = ethers.BigNumber.from(baseSlot).add(i).toHexString();
+          const storage = await getStorageAt(currentSlot);
+          const remainder = bytesLength - (i*64);
+          const end = (remainder > 64) ? 64 : (remainder - 1);
+          allStorage += storage.slice(2, end + 2);
+        }
+        return allStorage;
+      }
+    }
+    else if(encoding === "mapping") {
+      const key = args[0];
       const paddedKey = ethers.utils.hexZeroPad(key, "32");
-      return ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
+      const slot = ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
+      return getStorageAt(slot);
     }
-  }
-  return obj;
-}, {});
-
-console.log(storageMap);
-
-function storageFinder(provider, contract) {
-  return (loc) => {
-    return provider.getStorageAt(contract.address, loc);
   }
 }
 
@@ -75,25 +92,23 @@ async function test() {
   const signer = await provider.getSigner(0);
   const addr = await signer.getAddress();
   const Contract = new ethers.ContractFactory(abi, object, signer);
-
   const contract = await Contract.deploy();
+  const storageMap = new StorageMap(contract, storageLayout);
 
-  const find = storageFinder(provider, contract);
+  const x = await storageMap.getStorage('x');
+  const y = await storageMap.getStorage('y');
+  const z = await storageMap.getStorage('z');
 
-  const x = await find(storageMap.x);
-  const y = await find(storageMap.y);
-  const z = await find(storageMap.z);
-
-  const balance = await find(storageMap.balances(addr));
-  // const short = await find(storageMap.short());
-  const long = await find(storageMap.long());
+  const balance = await storageMap.getStorage('balances', addr);
+  const short = await storageMap.getStorage('short');
+  const long = await storageMap.getStorage('long');
 
   console.log({
     x: parseInt(x),
     y: parseInt(y),
     z: parseInt(z),
     balance: parseInt(balance),
-    // short: ethers.utils.toUtf8String(short.slice(0,24)),
+    short: ethers.utils.toUtf8String(short),
     long: ethers.utils.toUtf8String(long),
   });
 }

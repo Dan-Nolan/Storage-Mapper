@@ -10,7 +10,7 @@ contract Simple is Base {
 
   uint x = 33;
   string short = "happy times";
-  string long = "much longer times with a lot more storage space taken up wooohooo";
+  string long = "much longer times with a lot more storage space taken up wooohooo!";
 
   uint y = 500;
 
