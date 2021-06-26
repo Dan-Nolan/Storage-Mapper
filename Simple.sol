@@ -10,6 +10,8 @@ contract Simple is Base {
 
   uint[] numbers;
 
+  address owner = msg.sender;
+
   uint x = 33;
   string short = "happy times";
   string long = "much longer times with a lot more storage space taken up wooohooo!";

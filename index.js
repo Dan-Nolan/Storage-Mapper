@@ -150,7 +150,9 @@ async function test() {
 
   const number = await storageMap.getStorage('numbers', 2);
 
-  console.log({ x, y, z, neg, pos, isOn, balance, short, long, number });
+  const owner = await storageMap.getStorage('owner');
+
+  console.log({ x, y, z, neg, pos, isOn, balance, short, long, number, owner });
 }
 
 test()
