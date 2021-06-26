@@ -17,7 +17,7 @@ const input = {
   settings: {
     outputSelection: {
       '*': {
-        '*': ['storageLayout']
+        '*': ['storageLayout', 'evm.bytecode.object', 'abi']
       }
     }
   }
@@ -25,9 +25,7 @@ const input = {
 
 const output = JSON.parse(solc.compile(JSON.stringify(input)));
 
-const {storageLayout} = output.contracts[fileName][contractName];
-
-console.log(storageLayout);
+const { evm: { bytecode: { object }}, abi, storageLayout } = output.contracts[fileName][contractName];
 
 const { types, storage } = storageLayout;
 
@@ -35,7 +33,7 @@ const storageMap = storage.reduce((obj, entry) => {
   const { label, slot, type } = entry;
   const { encoding } = types[type];
   if(encoding === "inplace") {
-    obj[label] = slot;
+    obj[label] = ethers.utils.zeroPad(ethers.BigNumber.from(slot), "32");
   }
   else if(encoding === "mapping") {
 
@@ -45,6 +43,22 @@ const storageMap = storage.reduce((obj, entry) => {
 
 console.log(storageMap);
 
-// TODO: let's deploy this to the ganache provider
-// then we can start updating storage and testing the storageMap
-// to see how well it can start to go from the variable to the storage location
+async function test() {
+  const signer = await provider.getSigner(0);
+  const Contract = new ethers.ContractFactory(abi, object, signer);
+
+  const contract = await Contract.deploy();
+
+  const x = await provider.getStorageAt(contract.address, storageMap.x);
+  const y = await provider.getStorageAt(contract.address, storageMap.y);
+  const z = await provider.getStorageAt(contract.address, storageMap.z);
+
+  console.log({ x: parseInt(x), y: parseInt(y), z: parseInt(z) });
+}
+
+test()
+  .then(() => process.exit(1))
+  .catch((ex) => {
+    console.log(ex);
+    process.exit(1);
+  });

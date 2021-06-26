@@ -2,15 +2,16 @@
 pragma solidity ^0.8.0;
 
 contract Base {
-  uint z = 3;
+  uint z = 52;
 }
 
 contract Simple is Base {
-  uint x = 2;
-  uint y = 1; // 0x1
+  mapping(address => uint) balances;
+
+  uint x = 33;
   string testing = "happy times";
 
-  mapping(address => uint) balances;
+  uint y = 500;
 
   constructor() {
     balances[msg.sender] = 1000;
