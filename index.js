@@ -30,13 +30,18 @@ const { evm: { bytecode: { object }}, abi, storageLayout } = output.contracts[fi
 const { types, storage } = storageLayout;
 
 const storageMap = storage.reduce((obj, entry) => {
+  // slot: a string with the decimal value of the slot
   const { label, slot, type } = entry;
   const { encoding } = types[type];
+  const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
   if(encoding === "inplace") {
-    obj[label] = ethers.utils.zeroPad(ethers.BigNumber.from(slot), "32");
+    obj[label] = paddedSlot;
   }
   else if(encoding === "mapping") {
-
+    obj[label] = (key) => {
+      const paddedKey = ethers.utils.hexZeroPad(key, "32");
+      return ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
+    }
   }
   return obj;
 }, {});
@@ -53,7 +58,14 @@ async function test() {
   const y = await provider.getStorageAt(contract.address, storageMap.y);
   const z = await provider.getStorageAt(contract.address, storageMap.z);
 
-  console.log({ x: parseInt(x), y: parseInt(y), z: parseInt(z) });
+  const balance = await provider.getStorageAt(contract.address, storageMap.balances(await signer.getAddress()));
+
+  console.log({
+    x: parseInt(x),
+    y: parseInt(y),
+    z: parseInt(z),
+    balance: parseInt(balance),
+  });
 }
 
 test()

@@ -14,6 +14,6 @@ contract Simple is Base {
   uint y = 500;
 
   constructor() {
-    balances[msg.sender] = 1000;
+    balances[msg.sender] = 5243;
   }
 }
