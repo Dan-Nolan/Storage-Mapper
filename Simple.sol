@@ -8,6 +8,13 @@ contract Base {
 contract Simple is Base {
   mapping(address => int) balances;
 
+  struct Structure {
+    uint num;
+    bool yup;
+  }
+
+  Structure structure;
+
   uint[] numbers;
 
   address owner = msg.sender;
@@ -25,6 +32,9 @@ contract Simple is Base {
 
   constructor() {
     balances[msg.sender] = -555;
+
+    structure.num = 9;
+    structure.yup = true;
 
     numbers.push(5);
     numbers.push(10);

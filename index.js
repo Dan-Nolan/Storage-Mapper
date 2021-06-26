@@ -59,11 +59,23 @@ class StorageMap {
 
     // slot: a string with the decimal value of the slot
     const { label, slot, type } = entry;
-    const { encoding, value: typeValue, base } = types[type];
+    const { encoding, value: typeValue, base, members } = types[type];
     const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
     if(encoding === "inplace") {
-      const value = await getStorageAt(paddedSlot);
-      return this.parseValue(value, type);
+      if(type.indexOf("t_struct") === 0) {
+        let storage = {};
+        for(let i = 0; i < members.length; i++) {
+          const { label, type } = members[i];
+          const currentSlot = ethers.BigNumber.from(paddedSlot).add(i).toHexString();
+          const value = await getStorageAt(currentSlot);
+          storage[label] = this.parseValue(value, type);
+        }
+        return storage;
+      }
+      else {
+        const value = await getStorageAt(paddedSlot);
+        return this.parseValue(value, type);
+      }
     }
     else if(encoding === "dynamic_array") {
       const index = args[0];
@@ -152,7 +164,9 @@ async function test() {
 
   const owner = await storageMap.getStorage('owner');
 
-  console.log({ x, y, z, neg, pos, isOn, balance, short, long, number, owner });
+  const structure = await storageMap.getStorage('structure');
+
+  console.log({ x, y, z, neg, pos, isOn, balance, short, long, number, owner, structure });
 }
 
 test()
