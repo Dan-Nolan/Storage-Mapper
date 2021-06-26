@@ -9,7 +9,8 @@ contract Simple is Base {
   mapping(address => uint) balances;
 
   uint x = 33;
-  string testing = "happy times";
+  string short = "happy times";
+  string long = "much longer times with a lot more storage space taken up wooohooo";
 
   uint y = 500;
 
