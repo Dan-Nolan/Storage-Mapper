@@ -12,6 +12,8 @@ contract Simple is Base {
   string short = "happy times";
   string long = "much longer times with a lot more storage space taken up wooohooo!";
 
+  bool isOn = true;
+
   uint y = 500;
 
   constructor() {

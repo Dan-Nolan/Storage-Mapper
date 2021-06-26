@@ -42,17 +42,28 @@ class StorageMap {
 
     const entry = storage.find(x => x.label === name);
     if(!entry) {
-      console.log(`Storage variable '${name}' not found!`)
+      console.log(`Storage variable '${name}' not found!`);
     }
 
-    const getStorageAt = (loc) => provider.getStorageAt(this.contract.address, loc);
+    const getStorageAt = async (loc) => {
+      try {
+        const value = await provider.getStorageAt(this.contract.address, loc);
+        return value;
+      }
+      catch(ex) {
+        // https://github.com/ethers-io/ethers.js/issues/1132
+        // appears to have been fixed in hardhat but not in ganache-core yet
+        return "0x";
+      }
+    }
 
     // slot: a string with the decimal value of the slot
     const { label, slot, type } = entry;
-    const { encoding } = types[type];
+    const { encoding, value: typeValue } = types[type];
     const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
     if(encoding === "inplace") {
-      return getStorageAt(paddedSlot);
+      const value = await getStorageAt(paddedSlot);
+      return this.parseValue(value, type);
     }
     else if(encoding === "bytes") {
       // lookup bytes ->
@@ -62,28 +73,45 @@ class StorageMap {
       const initialValue = await getStorageAt(paddedSlot);
       const bytesLength = parseInt(initialValue.slice(-2), 16);
       const isShort = (initialValue.length === 66);
+      let val;
       if(isShort) {
-        const val = initialValue.slice(0, bytesLength + 2);
-        return val;
+        val = initialValue.slice(0, bytesLength + 2);
       }
       else {
-        let allStorage = "0x";
+        val = "0x";
         const baseSlot = ethers.utils.keccak256(paddedSlot);
         for(let i = 0; i*64 < bytesLength; i++) {
           const currentSlot = ethers.BigNumber.from(baseSlot).add(i).toHexString();
           const storage = await getStorageAt(currentSlot);
           const remainder = bytesLength - (i*64);
           const end = (remainder > 64) ? 64 : (remainder - 1);
-          allStorage += storage.slice(2, end + 2);
+          val += storage.slice(2, end + 2);
         }
-        return allStorage;
+      }
+      if(type === "t_string_storage") {
+        return ethers.utils.toUtf8String(val);
+      }
+      else {
+        return val;
       }
     }
     else if(encoding === "mapping") {
       const key = args[0];
       const paddedKey = ethers.utils.hexZeroPad(key, "32");
       const slot = ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
-      return getStorageAt(slot);
+      const value = await getStorageAt(slot);
+      return this.parseValue(value, typeValue);
+    }
+  }
+  parseValue(value, type) {
+    if(type === "t_bool") {
+      return Boolean(parseInt(value));
+    }
+    else if(type === "t_uint256") {
+      return parseInt(value);
+    }
+    else {
+      return value;
     }
   }
 }
@@ -99,18 +127,13 @@ async function test() {
   const y = await storageMap.getStorage('y');
   const z = await storageMap.getStorage('z');
 
+  const isOn = await storageMap.getStorage('isOn');
+
   const balance = await storageMap.getStorage('balances', addr);
   const short = await storageMap.getStorage('short');
   const long = await storageMap.getStorage('long');
 
-  console.log({
-    x: parseInt(x),
-    y: parseInt(y),
-    z: parseInt(z),
-    balance: parseInt(balance),
-    short: ethers.utils.toUtf8String(short),
-    long: ethers.utils.toUtf8String(long),
-  });
+  console.log({ x, y, z, isOn, balance, short, long });
 }
 
 test()
