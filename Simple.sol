@@ -12,6 +12,9 @@ contract Simple is Base {
   string short = "happy times";
   string long = "much longer times with a lot more storage space taken up wooohooo!";
 
+  int8 neg = -128;
+  int pos = 55;
+
   bool isOn = true;
 
   uint y = 500;

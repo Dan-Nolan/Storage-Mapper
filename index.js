@@ -107,8 +107,12 @@ class StorageMap {
     if(type === "t_bool") {
       return Boolean(parseInt(value));
     }
-    else if(type === "t_uint256") {
+    else if(type.indexOf("t_uint") === 0) {
       return parseInt(value);
+    }
+    else if(type.indexOf("t_int") === 0) {
+      const size = Number(type.slice(5));
+      return ethers.BigNumber.from(value).fromTwos(size).toNumber();
     }
     else {
       return value;
@@ -133,7 +137,10 @@ async function test() {
   const short = await storageMap.getStorage('short');
   const long = await storageMap.getStorage('long');
 
-  console.log({ x, y, z, isOn, balance, short, long });
+  const neg = await storageMap.getStorage('neg');
+  const pos = await storageMap.getStorage('pos');
+
+  console.log({ x, y, z, neg, pos, isOn, balance, short, long });
 }
 
 test()
