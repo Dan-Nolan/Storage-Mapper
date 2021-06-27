@@ -49,11 +49,17 @@ class StorageMap {
       }
     }
     else if(encoding === "dynamic_array") {
-      const index = args[0];
+      const index = args.shift();
       const baseSlot = ethers.utils.keccak256(slot);
       const indexSlot = ethers.BigNumber.from(baseSlot).add(index).toHexString();
-      const storage = await this._getStorageAt(indexSlot);
-      return this.parseValue(storage, typeDefinition.base);
+      if(this.isValueType(typeDefinition.base)) {
+        const storage = await this._getStorageAt(indexSlot);
+        return this.parseValue(storage, typeDefinition.base);
+      }
+      else {
+        const newTypeDefinition = this.storageLayout.types[typeDefinition.base];
+        return this._getEntryStorage(baseLabel, typeDefinition.base, indexSlot, newTypeDefinition, ...args);
+      }
     }
     else if(encoding === "bytes") {
       // lookup bytes ->
@@ -95,7 +101,7 @@ class StorageMap {
       }
       else {
         const newTypeDefinition = this.storageLayout.types[typeDefinition.value];
-        return this._getEntryStorage(baseLabel, baseType, baseSlot, newTypeDefinition, ...args);
+        return this._getEntryStorage(baseLabel, typeDefinition.value, baseSlot, newTypeDefinition, ...args);
       }
     }
   }
@@ -122,40 +128,3 @@ class StorageMap {
 }
 
 module.exports = StorageMap;
-
-async function test() {
-  const signer = await provider.getSigner(0);
-  const addr = await signer.getAddress();
-  const Contract = new ethers.ContractFactory(abi, bytecode, signer);
-  const contract = await Contract.deploy();
-  const storageMap = new StorageMap(contract, storageLayout);
-
-  // const x = await storageMap.getStorage('x');
-  // const y = await storageMap.getStorage('y');
-  // const z = await storageMap.getStorage('z');
-  //
-  // const isOn = await storageMap.getStorage('isOn');
-  //
-  // const short = await storageMap.getStorage('short');
-  // const long = await storageMap.getStorage('long');
-  //
-  // const neg = await storageMap.getStorage('neg');
-  // const pos = await storageMap.getStorage('pos');
-  //
-  // const balance = await storageMap.getStorage('balances', addr);
-
-  const nestedBalance = await storageMap.getStorage('nestedBalances', addr, addr);
-
-  // const number = await storageMap.getStorage('numbers', 2);
-
-  // const owner = await storageMap.getStorage('owner');
-
-  // const structure = await storageMap.getStorage('structure');
-
-  console.log({
-    // x, y, z, neg, pos, isOn,
-    // balance,
-    nestedBalance,
-    // short, long, number, owner, structure
-  });
-}

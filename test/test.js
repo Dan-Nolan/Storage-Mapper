@@ -68,6 +68,11 @@ describe('StorageMap', function() {
     assert.equal(third, 15);
   });
 
+  it('should handle arrays of structs', async () => {
+    const first = await storageMap.getStorage('structures', 0);
+    assert.equal(first.num, 47);
+  });
+
   it('should handle mappings', async () => {
     const balance = await storageMap.getStorage('balances', addr);
     assert.equal(balance, -555);

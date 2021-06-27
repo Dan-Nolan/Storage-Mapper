@@ -23,6 +23,11 @@ function compile(contractName, fileName) {
 
   const output = JSON.parse(solc.compile(JSON.stringify(input)));
 
+  if(output.errors && output.errors.length > 0) {
+    const messages = output.errors.map(x => x.formattedMessage).reduce((p,c) => p + "\n" + c, "");
+    throw new Error(messages);
+  }
+
   const { evm: { bytecode: { object: bytecode }}, abi, storageLayout } = output.contracts[fileName][contractName];
 
   return { bytecode, abi, storageLayout }

@@ -19,6 +19,8 @@ contract Simple is Base {
 
   uint[] numbers;
 
+  Structure[] structures;
+
   address owner = msg.sender;
 
   uint x = 33;
@@ -39,6 +41,8 @@ contract Simple is Base {
 
     structure.num = 9;
     structure.yup = true;
+
+    structures.push(Structure(47, false));
 
     numbers.push(5);
     numbers.push(10);
