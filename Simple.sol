@@ -8,6 +8,8 @@ contract Base {
 contract Simple is Base {
   mapping(address => int) balances;
 
+  mapping(address => mapping(address => uint)) nestedBalances;
+
   struct Structure {
     uint num;
     bool yup;
@@ -32,6 +34,8 @@ contract Simple is Base {
 
   constructor() {
     balances[msg.sender] = -555;
+
+    nestedBalances[msg.sender][msg.sender] = 750;
 
     structure.num = 9;
     structure.yup = true;
