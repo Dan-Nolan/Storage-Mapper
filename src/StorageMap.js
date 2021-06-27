@@ -1,35 +1,4 @@
-const fs = require('fs');
-const solc = require('solc');
-const ganache = require('ganache-core');
 const ethers = require('ethers');
-
-const provider = new ethers.providers.Web3Provider(ganache.provider());
-
-const contractName = "Simple";
-const fileName = `${contractName}.sol`;
-const content = fs.readFileSync("./" + fileName).toString();
-
-const input = {
-  language: 'Solidity',
-  sources: {
-     [fileName]: { content }
-  },
-  settings: {
-    outputSelection: {
-      '*': {
-        '*': ['storageLayout', 'evm.bytecode.object', 'abi']
-      }
-    }
-  }
-};
-
-const output = JSON.parse(solc.compile(JSON.stringify(input)));
-
-const { evm: { bytecode: { object }}, abi, storageLayout } = output.contracts[fileName][contractName];
-
-const { types, storage } = storageLayout;
-
-console.log(storageLayout);
 
 class StorageMap {
   constructor(contract, storageLayout) {
@@ -64,7 +33,7 @@ class StorageMap {
   async _getEntryStorage(baseLabel, baseType, slot, typeDefinition, ...args) {
     const { encoding } = typeDefinition;
     if(encoding === "inplace") {
-      if(type.indexOf("t_struct") === 0) {
+      if(baseType.indexOf("t_struct") === 0) {
         let storage = {};
         for(let i = 0; i < typeDefinition.members.length; i++) {
           const { label, type } = typeDefinition.members[i];
@@ -76,7 +45,7 @@ class StorageMap {
       }
       else {
         const value = await this._getStorageAt(slot);
-        return this.parseValue(value, type);
+        return this.parseValue(value, baseType);
       }
     }
     else if(encoding === "dynamic_array") {
@@ -109,7 +78,7 @@ class StorageMap {
           val += storage.slice(2, end + 2);
         }
       }
-      if(type === "t_string_storage") {
+      if(baseType === "t_string_storage") {
         return ethers.utils.toUtf8String(val);
       }
       else {
@@ -152,10 +121,12 @@ class StorageMap {
   }
 }
 
+module.exports = StorageMap;
+
 async function test() {
   const signer = await provider.getSigner(0);
   const addr = await signer.getAddress();
-  const Contract = new ethers.ContractFactory(abi, object, signer);
+  const Contract = new ethers.ContractFactory(abi, bytecode, signer);
   const contract = await Contract.deploy();
   const storageMap = new StorageMap(contract, storageLayout);
 
@@ -188,10 +159,3 @@ async function test() {
     // short, long, number, owner, structure
   });
 }
-
-test()
-  .then(() => process.exit(1))
-  .catch((ex) => {
-    console.log(ex);
-    process.exit(1);
-  });
