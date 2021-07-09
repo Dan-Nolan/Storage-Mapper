@@ -74,6 +74,11 @@ describe('StorageMap', function() {
     assert.equal(structure.i, 35);
   });
 
+  it("should handle a mapping to a an array of structs", async () => {
+    const nestedValue = await storageMap.getStorage('mapFun', 0, 0, 'c');
+    assert.equal(nestedValue, 77);
+  });
+
   it('should handle offset structs explicitly', async () => {
     const structureA = await storageMap.getStorage('offsetStruct', 'a');
     assert.equal(structureA, 20);

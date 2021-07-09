@@ -36,6 +36,8 @@ contract Simple is Base {
 
   Structure[] structures;
 
+  mapping(uint => OffsetStruct[]) mapFun;
+
   address owner = msg.sender;
 
   uint x = 33;
@@ -71,6 +73,9 @@ contract Simple is Base {
     offsetStruct.g = 15;
     offsetStruct.h = 25;
     offsetStruct.i = 35;
+
+    OffsetStruct storage s2 = mapFun[0].push();
+    s2.c = 77;
 
     numbers.push(5);
     numbers.push(10);
