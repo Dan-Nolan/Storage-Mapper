@@ -21,10 +21,15 @@ contract Simple is Base {
   Structure structure;
 
   struct OffsetStruct {
-    uint8 a;
+    uint24 a;
     uint16 b;
     uint32 c;
     uint64 d;
+    uint256 e;
+    uint24 f;
+    uint16 g;
+    uint32 h;
+    uint64 i;
   }
 
   OffsetStruct offsetStruct;
@@ -61,6 +66,11 @@ contract Simple is Base {
     offsetStruct.b = 40;
     offsetStruct.c = 60;
     offsetStruct.d = 80;
+    offsetStruct.e = 125;
+    offsetStruct.f = 5;
+    offsetStruct.g = 15;
+    offsetStruct.h = 25;
+    offsetStruct.i = 35;
 
     numbers.push(5);
     numbers.push(10);
