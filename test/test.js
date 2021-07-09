@@ -66,6 +66,7 @@ describe('StorageMap', function() {
     assert.equal(structure.a, 20);
     assert.equal(structure.b, 40);
     assert.equal(structure.c, 60);
+    assert.equal(structure.d, 80);
   });
 
   it('should handle arrays', async () => {

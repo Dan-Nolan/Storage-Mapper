@@ -23,7 +23,8 @@ contract Simple is Base {
   struct OffsetStruct {
     uint8 a;
     uint16 b;
-    uint8 c;
+    uint32 c;
+    uint64 d;
   }
 
   OffsetStruct offsetStruct;
@@ -59,6 +60,7 @@ contract Simple is Base {
     offsetStruct.a = 20;
     offsetStruct.b = 40;
     offsetStruct.c = 60;
+    offsetStruct.d = 80;
 
     numbers.push(5);
     numbers.push(10);

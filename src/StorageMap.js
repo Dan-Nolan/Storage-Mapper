@@ -49,15 +49,12 @@ class StorageMap {
               // this helps localize the logic a bit
               // TODO: handle this for explicit requests as well
               const value = await this._getStorageAt(currentSlot);
+              const paddedValue = ethers.utils.hexZeroPad(value, "32");
               const { numberOfBytes } = newTypeDefinition;
-              const length = value.length;
-              let start = length - numberOfBytes * 2 - offset * 2;
-              if(start < 0) {
-                // handle nonpadded values that take up the entire memory slot
-                start = 2;
-              }
+              const length = paddedValue.length;
+              const start = length - numberOfBytes * 2 - offset * 2;
               const end = start + numberOfBytes * 2;
-              const sliced = "0x" + value.slice(start, end);
+              const sliced = "0x" + paddedValue.slice(start, end);
               storage[label] = this.parseValue(sliced, type);
             }
             else {
