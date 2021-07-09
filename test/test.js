@@ -62,7 +62,6 @@ describe('StorageMap', function() {
   });
 
   it('should handle offset structs', async () => {
-    console.log(storageMap.storageLayout.types['t_struct(OffsetStruct)38_storage']);
     const structure = await storageMap.getStorage('offsetStruct');
     assert.equal(structure.a, 20);
     assert.equal(structure.b, 40);
