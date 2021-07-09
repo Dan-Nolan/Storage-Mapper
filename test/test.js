@@ -74,6 +74,14 @@ describe('StorageMap', function() {
     assert.equal(structure.i, 35);
   });
 
+  it('should handle offset structs explicitly', async () => {
+    const structureA = await storageMap.getStorage('offsetStruct', 'a');
+    assert.equal(structureA, 20);
+
+    const structureC = await storageMap.getStorage('offsetStruct', 'c');
+    assert.equal(structureC, 60);
+  });
+
   it('should handle arrays', async () => {
     const first = await storageMap.getStorage('numbers', 0);
     const second = await storageMap.getStorage('numbers', 1);

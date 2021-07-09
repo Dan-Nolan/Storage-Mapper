@@ -30,6 +30,17 @@ class StorageMap {
     const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
     return this._getEntryStorage(label, type, paddedSlot, typeDefinition, ...args);
   }
+  async _getStructValue(slot, type, offset, typeDefinition) {
+    // handle inplace (nonstruct) values here as its the only place we have to deal with offsets
+    const value = await this._getStorageAt(slot);
+    const paddedValue = ethers.utils.hexZeroPad(value, "32");
+    const { numberOfBytes } = typeDefinition;
+    const length = paddedValue.length;
+    const start = length - numberOfBytes * 2 - offset * 2;
+    const end = start + numberOfBytes * 2;
+    const sliced = "0x" + paddedValue.slice(start, end);
+    return this.parseValue(sliced, type);
+  }
   async _getEntryStorage(baseLabel, baseType, slot, typeDefinition, ...args) {
     const { encoding } = typeDefinition;
     if(encoding === "inplace") {
@@ -45,17 +56,8 @@ class StorageMap {
               continue; // only get dynamic values on explicit request
             }
             if(newTypeDefinition.encoding === "inplace" && type.indexOf("t_struct") === -1) {
-              // handle inplace (nonstruct) values here as its the only place we have to deal with offsets
-              // this helps localize the logic a bit
-              // TODO: handle this for explicit requests as well
-              const value = await this._getStorageAt(currentSlot);
-              const paddedValue = ethers.utils.hexZeroPad(value, "32");
-              const { numberOfBytes } = newTypeDefinition;
-              const length = paddedValue.length;
-              const start = length - numberOfBytes * 2 - offset * 2;
-              const end = start + numberOfBytes * 2;
-              const sliced = "0x" + paddedValue.slice(start, end);
-              storage[label] = this.parseValue(sliced, type);
+              // handle offsets
+              storage[label] = await this._getStructValue(currentSlot, type, offset, newTypeDefinition);
             }
             else {
               storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
@@ -70,10 +72,16 @@ class StorageMap {
           if(!member) {
             throw new Error(`Member '${prop}' not found!`);
           }
-          const { label, type, slot: memberSlot } = member;
+          const { label, type, offset, slot: memberSlot } = member;
           const hexSlot = ethers.BigNumber.from(slot).add(memberSlot).toHexString();
           const newTypeDefinition = this.storageLayout.types[type];
-          return this._getEntryStorage(label, type, hexSlot, newTypeDefinition, ...args);
+          if(newTypeDefinition.encoding === "inplace" && type.indexOf("t_struct") === -1) {
+            // handle offsets
+            return this._getStructValue(hexSlot, type, offset, newTypeDefinition);
+          }
+          else {
+            return this._getEntryStorage(label, type, hexSlot, newTypeDefinition, ...args);
+          }
         }
       }
       else {
