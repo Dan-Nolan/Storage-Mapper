@@ -13,6 +13,7 @@ contract Simple is Base {
   struct Structure {
     uint num;
     string msg;
+    uint[] numbers;
   }
 
   Structure structure;
