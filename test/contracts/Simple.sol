@@ -40,7 +40,7 @@ contract Simple is Base {
     nestedBalances[msg.sender][msg.sender] = 750;
 
     structure.num = 9;
-    structure.msg = "Hello World!";
+    structure.msg = "Hello World! This is a long message test, long enough for 2 slots";
 
     structures.push(Structure(47, "Weee"));
 

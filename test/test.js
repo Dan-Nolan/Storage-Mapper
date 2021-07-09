@@ -56,7 +56,7 @@ describe('StorageMap', function() {
   it('should handle structs', async () => {
     const structure = await storageMap.getStorage('structure');
     assert.equal(structure.num, 9);
-    assert.equal(structure.msg, "Hello World!");
+    assert.equal(structure.msg, "Hello World! This is a long message test, long enough for 2 slots");
   });
 
   it('should handle arrays', async () => {
