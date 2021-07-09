@@ -20,6 +20,14 @@ contract Simple is Base {
 
   Structure structure;
 
+  struct OffsetStruct {
+    uint8 a;
+    uint16 b;
+    uint8 c;
+  }
+
+  OffsetStruct offsetStruct;
+
   Structure[] structures;
 
   address owner = msg.sender;
@@ -47,6 +55,10 @@ contract Simple is Base {
     Structure storage s = structures.push();
     s.num = 47;
     s.msg = "Weee";
+
+    offsetStruct.a = 20;
+    offsetStruct.b = 40;
+    offsetStruct.c = 60;
 
     numbers.push(5);
     numbers.push(10);

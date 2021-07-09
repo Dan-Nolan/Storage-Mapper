@@ -38,13 +38,27 @@ class StorageMap {
           // without args a struct is being returned as an object full of all the resolved properties
           let storage = {};
           for(let i = 0; i < typeDefinition.members.length; i++) {
-            const { label, type } = typeDefinition.members[i];
-            const currentSlot = ethers.BigNumber.from(slot).add(i).toHexString();
+            const { label, type, offset, slot: memberSlot } = typeDefinition.members[i];
+            const currentSlot = ethers.BigNumber.from(slot).add(memberSlot).toHexString();
             const newTypeDefinition = this.storageLayout.types[type];
             if(newTypeDefinition.encoding === "dynamic_array") {
               continue; // only get dynamic values on explicit request
             }
-            storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
+            if(newTypeDefinition.encoding === "inplace" && type.indexOf("t_struct") === -1) {
+              // handle inplace (nonstruct) values here as its the only place we have to deal with offsets
+              // this helps localize the logic a bit
+              // TODO: handle this for explicit requests as well
+              // TODO: offset is backwards??
+              const value = await this._getStorageAt(currentSlot);
+              const { numberOfBytes } = newTypeDefinition;
+              const start = 2 + offset * 2;
+              const end = start + numberOfBytes * 2;
+              const sliced = "0x" + value.slice(start, end);
+              storage[label] = this.parseValue(sliced, type);
+            }
+            else {
+              storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
+            }
           }
           return storage;
         }

@@ -61,6 +61,14 @@ describe('StorageMap', function() {
     assert.equal(numberInStruct, 52);
   });
 
+  it('should handle offset structs', async () => {
+    console.log(storageMap.storageLayout.types['t_struct(OffsetStruct)38_storage']);
+    const structure = await storageMap.getStorage('offsetStruct');
+    assert.equal(structure.a, 20);
+    assert.equal(structure.b, 40);
+    assert.equal(structure.c, 60);
+  });
+
   it('should handle arrays', async () => {
     const first = await storageMap.getStorage('numbers', 0);
     const second = await storageMap.getStorage('numbers', 1);
