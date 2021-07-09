@@ -75,7 +75,8 @@ class StorageMap {
       }
       else {
         val = "0x";
-        const baseSlot = ethers.utils.keccak256(slot);
+        const paddedSlot = ethers.utils.hexZeroPad(slot, "32");
+        const baseSlot = ethers.utils.keccak256(paddedSlot);
         for(let i = 0; i*64 < bytesLength; i++) {
           const currentSlot = ethers.BigNumber.from(baseSlot).add(i).toHexString();
           const storage = await this._getStorageAt(currentSlot);
@@ -93,8 +94,9 @@ class StorageMap {
     }
     else if(encoding === "mapping") {
       const key = args.shift();
+      const paddedSlot = ethers.utils.hexZeroPad(slot, "32");
       const paddedKey = ethers.utils.hexZeroPad(key, "32");
-      const baseSlot = ethers.utils.keccak256(paddedKey + slot.slice(2));
+      const baseSlot = ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
       if(this.isValueType(typeDefinition.value)) {
         const value = await this._getStorageAt(baseSlot);
         return this.parseValue(value, typeDefinition.value);
