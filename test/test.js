@@ -56,7 +56,7 @@ describe('StorageMap', function() {
   it('should handle structs', async () => {
     const structure = await storageMap.getStorage('structure');
     assert.equal(structure.num, 9);
-    assert.equal(structure.yup, true);
+    assert.equal(structure.msg, "Hello World!");
   });
 
   it('should handle arrays', async () => {
@@ -71,6 +71,7 @@ describe('StorageMap', function() {
   it('should handle arrays of structs', async () => {
     const first = await storageMap.getStorage('structures', 0);
     assert.equal(first.num, 47);
+    assert.equal(first.msg, "Weee");
   });
 
   it('should handle mappings', async () => {

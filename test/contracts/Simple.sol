@@ -12,7 +12,7 @@ contract Simple is Base {
 
   struct Structure {
     uint num;
-    bool yup;
+    string msg;
   }
 
   Structure structure;
@@ -40,9 +40,9 @@ contract Simple is Base {
     nestedBalances[msg.sender][msg.sender] = 750;
 
     structure.num = 9;
-    structure.yup = true;
+    structure.msg = "Hello World!";
 
-    structures.push(Structure(47, false));
+    structures.push(Structure(47, "Weee"));
 
     numbers.push(5);
     numbers.push(10);

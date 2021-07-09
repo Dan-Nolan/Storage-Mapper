@@ -38,8 +38,8 @@ class StorageMap {
         for(let i = 0; i < typeDefinition.members.length; i++) {
           const { label, type } = typeDefinition.members[i];
           const currentSlot = ethers.BigNumber.from(slot).add(i).toHexString();
-          const value = await this._getStorageAt(currentSlot);
-          storage[label] = this.parseValue(value, type);
+          const newTypeDefinition = this.storageLayout.types[type];
+          storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
         }
         return storage;
       }
