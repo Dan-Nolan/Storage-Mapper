@@ -57,6 +57,8 @@ describe('StorageMap', function() {
     const structure = await storageMap.getStorage('structure');
     assert.equal(structure.num, 9);
     assert.equal(structure.msg, "Hello World! This is a long message test, long enough for 2 slots");
+    const numberInStruct = await storageMap.getStorage("structure", "numbers", 0);
+    assert.equal(numberInStruct, 52);
   });
 
   it('should handle arrays', async () => {

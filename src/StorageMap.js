@@ -34,14 +34,32 @@ class StorageMap {
     const { encoding } = typeDefinition;
     if(encoding === "inplace") {
       if(baseType.indexOf("t_struct") === 0) {
-        let storage = {};
-        for(let i = 0; i < typeDefinition.members.length; i++) {
-          const { label, type } = typeDefinition.members[i];
-          const currentSlot = ethers.BigNumber.from(slot).add(i).toHexString();
-          const newTypeDefinition = this.storageLayout.types[type];
-          storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
+        if(args.length === 0) {
+          // without args a struct is being returned as an object full of all the resolved properties
+          let storage = {};
+          for(let i = 0; i < typeDefinition.members.length; i++) {
+            const { label, type } = typeDefinition.members[i];
+            const currentSlot = ethers.BigNumber.from(slot).add(i).toHexString();
+            const newTypeDefinition = this.storageLayout.types[type];
+            if(newTypeDefinition.encoding === "dynamic_array") {
+              continue; // only get dynamic values on explicit request
+            }
+            storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
+          }
+          return storage;
         }
-        return storage;
+        else {
+          // an explicit request made for a property within a struct
+          const prop = args.shift();
+          const member = typeDefinition.members.find(x => x.label === prop);
+          if(!member) {
+            throw new Error(`Member '${prop}' not found!`);
+          }
+          const { label, type, slot: memberSlot } = member;
+          const hexSlot = ethers.BigNumber.from(slot).add(memberSlot).toHexString();
+          const newTypeDefinition = this.storageLayout.types[type];
+          return this._getEntryStorage(label, type, hexSlot, newTypeDefinition, ...args);
+        }
       }
       else {
         const value = await this._getStorageAt(slot);
@@ -50,7 +68,8 @@ class StorageMap {
     }
     else if(encoding === "dynamic_array") {
       const index = args.shift();
-      const baseSlot = ethers.utils.keccak256(slot);
+      const paddedSlot = ethers.utils.hexZeroPad(slot, "32");
+      const baseSlot = ethers.utils.keccak256(paddedSlot);
       const indexSlot = ethers.BigNumber.from(baseSlot).add(index).toHexString();
       if(this.isValueType(typeDefinition.base)) {
         const storage = await this._getStorageAt(indexSlot);

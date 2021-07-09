@@ -10,15 +10,15 @@ contract Simple is Base {
 
   mapping(address => mapping(address => uint)) nestedBalances;
 
+  uint[] numbers;
+
   struct Structure {
+    uint[] numbers;
     uint num;
     string msg;
-    uint[] numbers;
   }
 
   Structure structure;
-
-  uint[] numbers;
 
   Structure[] structures;
 
@@ -42,8 +42,11 @@ contract Simple is Base {
 
     structure.num = 9;
     structure.msg = "Hello World! This is a long message test, long enough for 2 slots";
+    structure.numbers.push(52);
 
-    structures.push(Structure(47, "Weee"));
+    Structure storage s = structures.push();
+    s.num = 47;
+    s.msg = "Weee";
 
     numbers.push(5);
     numbers.push(10);
