@@ -93,13 +93,15 @@ class StorageMap {
       const index = args.shift();
       const paddedSlot = ethers.utils.hexZeroPad(slot, "32");
       const baseSlot = ethers.utils.keccak256(paddedSlot);
-      const indexSlot = ethers.BigNumber.from(baseSlot).add(index).toHexString();
+      const newTypeDefinition = this.storageLayout.types[typeDefinition.base];
+      const {numberOfBytes} = newTypeDefinition;
+      const position = index * numberOfBytes / 32;
+      const indexSlot = ethers.BigNumber.from(baseSlot).add(position).toHexString();
       if(this.isValueType(typeDefinition.base)) {
         const storage = await this._getStorageAt(indexSlot);
         return this.parseValue(storage, typeDefinition.base);
       }
       else {
-        const newTypeDefinition = this.storageLayout.types[typeDefinition.base];
         return this._getEntryStorage(baseLabel, typeDefinition.base, indexSlot, newTypeDefinition, ...args);
       }
     }

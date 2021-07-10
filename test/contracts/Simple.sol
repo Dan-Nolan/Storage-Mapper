@@ -60,9 +60,13 @@ contract Simple is Base {
     structure.msg = "Hello World! This is a long message test, long enough for 2 slots";
     structure.numbers.push(52);
 
-    Structure storage s = structures.push();
-    s.num = 47;
-    s.msg = "Weee";
+    Structure storage s0 = structures.push();
+    s0.num = 47;
+    s0.msg = "Weee";
+
+    Structure storage s1 = structures.push();
+    s1.num = 49;
+    s1.msg = "Wooo";
 
     offsetStruct.a = 20;
     offsetStruct.b = 40;
@@ -75,7 +79,16 @@ contract Simple is Base {
     offsetStruct.i = 35;
 
     OffsetStruct storage s2 = mapFun[0].push();
-    s2.c = 77;
+    s2.e = 77;
+    s2.f = 99;
+
+    OffsetStruct storage s3 = mapFun[0].push();
+    s3.a = 11;
+    s3.b = 12;
+
+    OffsetStruct storage s4 = mapFun[1].push();
+    s4.c = 55;
+    s4.d = 44;
 
     numbers.push(5);
     numbers.push(10);
