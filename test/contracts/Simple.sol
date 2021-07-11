@@ -38,6 +38,9 @@ contract Simple is Base {
 
   mapping(uint => OffsetStruct[]) mapFun;
 
+  bytes2 nibble = 0xbeef;
+  bytes6 snacks = 0xabcdef123456;
+
   address owner = msg.sender;
 
   uint x = 33;
@@ -89,6 +92,10 @@ contract Simple is Base {
     OffsetStruct storage s4 = mapFun[1].push();
     s4.c = 55;
     s4.d = 44;
+
+    OffsetStruct storage s5 = mapFun[1].push();
+    s5.g = 33;
+    s5.h = 22;
 
     numbers.push(5);
     numbers.push(10);

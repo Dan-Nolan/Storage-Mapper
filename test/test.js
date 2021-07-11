@@ -53,6 +53,13 @@ describe('StorageMap', function() {
     assert.equal(pos, 55);
   });
 
+  it("should handle fixed byte arrays", async () => {
+    const nibble = await storageMap.getStorage("nibble");
+    assert.equal(nibble, "0xbeef");
+    const snacks = await storageMap.getStorage("snacks");
+    assert.equal(snacks, "0xabcdef123456");
+  });
+
   it('should handle structs', async () => {
     const structure = await storageMap.getStorage('structure');
     assert.equal(structure.num, 9);
@@ -74,13 +81,15 @@ describe('StorageMap', function() {
     assert.equal(structure.i, 35);
   });
 
-  it("should handle a mapping to a an array of structs", async () => {
+  it("should handle a mapping to an array of structs", async () => {
     assert.equal(await storageMap.getStorage('mapFun', 0, 0, 'e'), 77);
     assert.equal(await storageMap.getStorage('mapFun', 0, 0, 'f'), 99);
     assert.equal(await storageMap.getStorage('mapFun', 0, 1, 'a'), 11);
     assert.equal(await storageMap.getStorage('mapFun', 0, 1, 'b'), 12);
     assert.equal(await storageMap.getStorage('mapFun', 1, 0, 'c'), 55);
     assert.equal(await storageMap.getStorage('mapFun', 1, 0, 'd'), 44);
+    assert.equal(await storageMap.getStorage('mapFun', 1, 1, 'g'), 33);
+    assert.equal(await storageMap.getStorage('mapFun', 1, 1, 'h'), 22);
   });
 
   it('should handle offset structs explicitly', async () => {

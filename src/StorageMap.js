@@ -24,24 +24,13 @@ class StorageMap {
       console.log(`Storage variable '${name}' not found!`);
     }
 
-    const { label, slot, type } = entry;
+    const { label, slot, type, offset } = entry;
     const typeDefinition = types[type];
     // slot is a string with the decimal value of the slot
     const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
-    return this._getEntryStorage(label, type, paddedSlot, typeDefinition, ...args);
+    return this._getEntryStorage(label, type, paddedSlot, offset, typeDefinition, ...args);
   }
-  async _getStructValue(slot, type, offset, typeDefinition) {
-    // handle inplace (nonstruct) values here as its the only place we have to deal with offsets
-    const value = await this._getStorageAt(slot);
-    const paddedValue = ethers.utils.hexZeroPad(value, "32");
-    const { numberOfBytes } = typeDefinition;
-    const length = paddedValue.length;
-    const start = length - numberOfBytes * 2 - offset * 2;
-    const end = start + numberOfBytes * 2;
-    const sliced = "0x" + paddedValue.slice(start, end);
-    return this.parseValue(sliced, type);
-  }
-  async _getEntryStorage(baseLabel, baseType, slot, typeDefinition, ...args) {
+  async _getEntryStorage(baseLabel, baseType, slot, offset, typeDefinition, ...args) {
     const { encoding } = typeDefinition;
     if(encoding === "inplace") {
       if(baseType.indexOf("t_struct") === 0) {
@@ -56,11 +45,10 @@ class StorageMap {
               continue; // only get dynamic values on explicit request
             }
             if(newTypeDefinition.encoding === "inplace" && type.indexOf("t_struct") === -1) {
-              // handle offsets
-              storage[label] = await this._getStructValue(currentSlot, type, offset, newTypeDefinition);
+              storage[label] = await this._parseValue(currentSlot, type, offset, newTypeDefinition);
             }
             else {
-              storage[label] = await this._getEntryStorage(label, type, currentSlot, newTypeDefinition, ...args);
+              storage[label] = await this._getEntryStorage(label, type, currentSlot, offset, newTypeDefinition, ...args);
             }
           }
           return storage;
@@ -76,17 +64,15 @@ class StorageMap {
           const hexSlot = ethers.BigNumber.from(slot).add(memberSlot).toHexString();
           const newTypeDefinition = this.storageLayout.types[type];
           if(newTypeDefinition.encoding === "inplace" && type.indexOf("t_struct") === -1) {
-            // handle offsets
-            return this._getStructValue(hexSlot, type, offset, newTypeDefinition);
+            return this._parseValue(hexSlot, type, offset, newTypeDefinition);
           }
           else {
-            return this._getEntryStorage(label, type, hexSlot, newTypeDefinition, ...args);
+            return this._getEntryStorage(label, type, hexSlot, offset, newTypeDefinition, ...args);
           }
         }
       }
       else {
-        const value = await this._getStorageAt(slot);
-        return this.parseValue(value, baseType);
+        return this._parseValue(slot, baseType, offset, typeDefinition);
       }
     }
     else if(encoding === "dynamic_array") {
@@ -98,11 +84,11 @@ class StorageMap {
       const position = index * numberOfBytes / 32;
       const indexSlot = ethers.BigNumber.from(baseSlot).add(position).toHexString();
       if(this.isValueType(typeDefinition.base)) {
-        const storage = await this._getStorageAt(indexSlot);
-        return this.parseValue(storage, typeDefinition.base);
+        // should offset be zero here?
+        return this._parseValue(indexSlot, typeDefinition.base, 0, newTypeDefinition);
       }
       else {
-        return this._getEntryStorage(baseLabel, typeDefinition.base, indexSlot, newTypeDefinition, ...args);
+        return this._getEntryStorage(baseLabel, typeDefinition.base, indexSlot, 0, newTypeDefinition, ...args);
       }
     }
     else if(encoding === "bytes") {
@@ -141,13 +127,13 @@ class StorageMap {
       const paddedSlot = ethers.utils.hexZeroPad(slot, "32");
       const paddedKey = ethers.utils.hexZeroPad(key, "32");
       const baseSlot = ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
+      const newTypeDefinition = this.storageLayout.types[typeDefinition.value];
       if(this.isValueType(typeDefinition.value)) {
-        const value = await this._getStorageAt(baseSlot);
-        return this.parseValue(value, typeDefinition.value);
+        // should offset be zero here always?
+        return this._parseValue(baseSlot, typeDefinition.value, 0, newTypeDefinition);
       }
       else {
-        const newTypeDefinition = this.storageLayout.types[typeDefinition.value];
-        return this._getEntryStorage(baseLabel, typeDefinition.value, baseSlot, newTypeDefinition, ...args);
+        return this._getEntryStorage(baseLabel, typeDefinition.value, baseSlot, 0, newTypeDefinition, ...args);
       }
     }
   }
@@ -156,7 +142,17 @@ class StorageMap {
       (type.indexOf("t_uint") === 0) ||
       (type.indexOf("t_int") === 0);
   }
-  parseValue(value, type) {
+  async _parseValue(slot, type, offset, typeDefinition) {
+    const value = await this._getStorageAt(slot);
+    const paddedValue = ethers.utils.hexZeroPad(value, "32");
+    const { numberOfBytes } = typeDefinition;
+    const length = paddedValue.length;
+    const start = length - numberOfBytes * 2 - offset * 2;
+    const end = start + numberOfBytes * 2;
+    const sliced = "0x" + paddedValue.slice(start, end);
+    return this._parseByType(sliced, type);
+  }
+  _parseByType(value, type) {
     if(type === "t_bool") {
       return Boolean(parseInt(value));
     }
