@@ -41,8 +41,6 @@ contract Simple is Base {
   bytes2 nibble = 0xbeef;
   bytes6 snacks = 0xabcdef123456;
 
-  fixed testing = 123.4;
-
   address owner = msg.sender;
 
   uint x = 33;
@@ -55,6 +53,14 @@ contract Simple is Base {
   bool isOn = true;
 
   uint y = 500;
+
+  enum Foods {
+    Apple,
+    Pear,
+    Banana
+  }
+
+  Foods food = Foods.Pear;
 
   constructor() {
     balances[msg.sender] = -555;

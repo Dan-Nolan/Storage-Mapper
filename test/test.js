@@ -60,6 +60,11 @@ describe('StorageMap', function() {
     assert.equal(snacks, "0xabcdef123456");
   });
 
+  it("should handle enums", async () => {
+    const food = await storageMap.getStorage("food");
+    assert.equal(food, 1);
+  });
+
   it('should handle structs', async () => {
     const structure = await storageMap.getStorage('structure');
     assert.equal(structure.num, 9);
