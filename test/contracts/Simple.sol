@@ -41,6 +41,8 @@ contract Simple is Base {
   bytes2 nibble = 0xbeef;
   bytes6 snacks = 0xabcdef123456;
 
+  fixed testing = 123.4;
+
   address owner = msg.sender;
 
   uint x = 33;
