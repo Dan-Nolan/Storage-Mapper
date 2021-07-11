@@ -84,7 +84,6 @@ class StorageMap {
       const position = index * numberOfBytes / 32;
       const indexSlot = ethers.BigNumber.from(baseSlot).add(position).toHexString();
       if(this.isValueType(typeDefinition.base)) {
-        // should offset be zero here?
         return this._parseValue(indexSlot, typeDefinition.base, 0, newTypeDefinition);
       }
       else {
@@ -129,7 +128,6 @@ class StorageMap {
       const baseSlot = ethers.utils.keccak256(paddedKey + paddedSlot.slice(2));
       const newTypeDefinition = this.storageLayout.types[typeDefinition.value];
       if(this.isValueType(typeDefinition.value)) {
-        // should offset be zero here always?
         return this._parseValue(baseSlot, typeDefinition.value, 0, newTypeDefinition);
       }
       else {
