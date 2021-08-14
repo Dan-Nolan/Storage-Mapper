@@ -167,4 +167,4 @@ class StorageMap {
   }
 }
 
-module.exports = StorageMap;
+export default StorageMap;
