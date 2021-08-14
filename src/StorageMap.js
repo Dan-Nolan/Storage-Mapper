@@ -16,15 +16,22 @@ class StorageMap {
       return "0x";
     }
   }
-  async getStorage(name, ...args) {
-    const { types, storage } = this.storageLayout;
+  getEntries() {
+    return this.storageLayout.storage.map(x => x.label);
+  }
+  getEntry(label) {
+    const { storage } = this.storageLayout;
 
-    const entry = storage.find(x => x.label === name);
+    const entry = storage.find(x => x.label === label);
     if(!entry) {
-      console.log(`Storage variable '${name}' not found!`);
+      console.log(`Storage variable '${label}' not found!`);
     }
 
-    const { label, slot, type, offset } = entry;
+    return entry;
+  }
+  async getStorage(label, ...args) {
+    const { types } = this.storageLayout;
+    const { slot, type, offset } = this.getEntry(label);
     const typeDefinition = types[type];
     // slot is a string with the decimal value of the slot
     const paddedSlot = ethers.utils.hexZeroPad(ethers.BigNumber.from(slot), "32");
@@ -167,4 +174,4 @@ class StorageMap {
   }
 }
 
-export default StorageMap;
+module.exports = StorageMap;
