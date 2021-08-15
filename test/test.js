@@ -127,6 +127,9 @@ describe('StorageMap', function() {
   it('should handle mappings', async () => {
     const balance = await storageMap.getStorage('balances', addr);
     assert.equal(balance, -555);
+
+    const address = await storageMap.getStorage('connections', addr);
+    assert.equal(address, addr.toLowerCase());
   });
 
   it('should handle nested mappings', async () => {
